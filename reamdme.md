@@ -6,3 +6,7 @@ The purpose of this script it to measure the difference in wait times of HTTP re
   
 ###To Use
 ####Variables
+The following varaibles should be set in your environment before executing the script:  
+1. HostList --  The list of host fragments.  Each will be applied to each item in 'SourceList'
+2. SourceList -- A text file where each line is a url fragment to be applied to each host. 
+3. RequestCount
