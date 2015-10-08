@@ -9,6 +9,7 @@
 # Libs
 library(RCurl)
 library(dplyr)
+library(tidyr)
 
 # Clear + initialize.
 rm(list=ls())
@@ -25,15 +26,18 @@ close(con)
 rm(con)
 
 # Assemble the final list of urls that will be hit.
-final<-vector(mode="character")
-if (length(HostList) != 2) { stop("Only two hosts are supported at this time!") }
+final<-data.frame(ID=numeric(0), Host=character(0),Path=character(0), stringsAsFactors = FALSE)
 
-for(h in HostList)
+curID<-0
+hostList<-c(RealHost, ProxyHost)
+for(h in hostList)
 {
+
   urlCount<-0
   for (s in srcs)
   {
-    final<-c(final, paste0(h,s))
+    curID<-curID+1
+    final<-rbind(final, data.frame(ID=curID, Host=h, Path=s, stringsAsFactors = FALSE))
     urlCount<-urlCount + 1
     if (urlCount >= MaxUrls) 
     {
@@ -64,6 +68,8 @@ for(i in 1:RequestCount)
   allTimes<-sapply(useList, doRequest)
 }
 
+# Get a table that we will use for analysis purposes.
 df<-data.frame(times=allTimes, url=names(allTimes), stringsAsFactors=FALSE)
-tbl<-tbl_df(df)
+timeTbl<-tbl_df(df)
 rm(df)
+

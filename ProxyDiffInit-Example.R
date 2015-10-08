@@ -3,8 +3,12 @@
 # You may copy and paste the contents of this file to get started.
 
 
-# The list of host fragments that will be applied to the url fragment list.
-HostList<- c("http://www.proxyHost", "http://www.realHost")
+# The proxy host / url fragment.
+ProxyHost<-"http://someproxy"
+
+# The real host / url fragment.
+RealHost<-"http://realhost"
+
 
 # The list of source url fragments that will be used.
 SourceList<-"MyUrls.txt"    
