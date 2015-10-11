@@ -18,3 +18,6 @@ MaxUrls<-5
 
 # Each URL will be tried once.  we recommend that you leave this at 1.
 RequestCount<-1
+
+# How the label the real/proxy items on the plots.
+PlotLabels = c("a","b")

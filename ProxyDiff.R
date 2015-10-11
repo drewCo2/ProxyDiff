@@ -45,7 +45,6 @@ final<-data.frame(Host=character(0),Path=character(0), stringsAsFactors = FALSE)
 hostList<-c(RealHost, ProxyHost)
 for(h in hostList)
 {
-
   urlCount<-0
   for (s in srcs)
   {
@@ -74,11 +73,11 @@ doRequest<-function(urlData, sampleNumber)
   message(paste("GET:", url))
   t<-system.time(getURL(url))[["elapsed"]]
 
-  data.frame(Host = urlData[1], Path=urlData[2], Time=t, Sample=sampleNumber)  
+  data.frame(Host = urlData[1], Path=urlData[2], Time=t, Sample=sampleNumber, Timestamp=date())  
 }
 
 # Compile all of the times + data together.
-allTimes<-data.frame(Host=character(), Path=character(), Time=numeric(), Sampel=numeric())
+allTimes<-data.frame(Host=character(), Path=character(), Time=numeric(), Sample=numeric(), Timestamp=character())
 for(i in 1:RequestCount)
 {
   # Randomize the order of the requests.
@@ -90,16 +89,38 @@ for(i in 1:RequestCount)
   }
 }
 
-# A bit of cleanup.
-csvData<-mutate(allTimes, Time=format(Time, digits=3))
+# Write the raw data to disk.
+pathCount<-nrow(allTimes) / RequestCount / 2
+
+data<-mutate(allTimes, PathID=factor(allTimes$Path, labels=1:pathCount))
+
+#Write the Raw Data.
+csvData<-mutate(data,Time=format(Time, digits=3))
 write.csv(csvData, "TimeData.csv")
 
+data<-tbl_df(data)
 
-ByHost = group_by(allTimes, Host)
+ByHost = group_by(data, Host)
 summarize(ByHost, mean(Time))
 
-# Get a table that we will use for analysis purposes.
-# df<-data.frame(times=allTimes, url=names(allTimes), stringsAsFactors=FALSE)
-#timeTbl<-tbl_df(df)
-# rm(df)
+ByReal<-filter(data, Host==RealHost)
+ByProxy<-filter(data, Host==ProxyHost)
 
+
+par(mfrow=c(1,1))
+
+# Plot the samples, organized by the path ID.  This way we can see the times
+# for each the real/proxy endpoints.
+plotByPath<-function()
+{
+  max(data$Time)
+  yRange<-c(-0.5,max(data$Time)+1)
+  
+  plot(x=as.numeric(ByReal$PathID), y=ByReal$Time, col="red", pch=1, xlab="PathID", ylab="Time",ylim=yRange, main="Time By Path")
+  lines(x=as.numeric(ByProxy$PathID), y=ByProxy$Time, col="blue", type="p")
+  legend("topright", col=c("red","blue"), legend=PlotLabels, pch=1)
+}
+plotByPath()
+
+
+# Now show all of the urls by time.
