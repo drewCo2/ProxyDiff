@@ -82,12 +82,21 @@ allTimes<-data.frame(Host=character(), Path=character(), Time=numeric(), Sampel=
 for(i in 1:RequestCount)
 {
   # Randomize the order of the requests.
-  useList = sample(final)
-  for(j in 1:length(useList))
+  # useList = sample(final)
+  useList<-final[sample(1:nrow(final)),]
+  for(j in 1:nrow(useList))
   {
     allTimes<-rbind(allTimes, doRequest(useList[j,], i))
   }
 }
+
+# A bit of cleanup.
+csvData<-mutate(allTimes, Time=format(Time, digits=3))
+write.csv(csvData, "TimeData.csv")
+
+
+ByHost = group_by(allTimes, Host)
+summarize(ByHost, mean(Time))
 
 # Get a table that we will use for analysis purposes.
 # df<-data.frame(times=allTimes, url=names(allTimes), stringsAsFactors=FALSE)
