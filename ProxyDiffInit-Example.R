@@ -19,5 +19,11 @@ MaxUrls<-5
 # Each URL will be tried once.  we recommend that you leave this at 1.
 RequestCount<-1
 
+# The amount of time to delay between each request.  A random time between these
+# times will be chosen to help represent a real user.
+DelayMin<-0.25
+DelayMax<-1.00
+
 # How the label the real/proxy items on the plots.
 PlotLabels = c("a","b")
+

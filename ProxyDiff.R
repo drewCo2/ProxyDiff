@@ -73,7 +73,7 @@ doRequest<-function(urlData, sampleNumber)
   message(paste("GET:", url))
   t<-system.time(getURL(url))[["elapsed"]]
 
-  data.frame(Host = urlData[1], Path=urlData[2], Time=t, Sample=sampleNumber, Timestamp=as.character(Sys.time()))  
+  data.frame(Host = urlData[1], Path=urlData[2], Time=t, Sample=sampleNumber, Timestamp=as.character(Sys.time()))
 }
 
 # Compile all of the times + data together.
@@ -92,11 +92,8 @@ for(i in 1:RequestCount)
 # Write the raw data to disk.
 pathCount<-nrow(allTimes) / RequestCount / 2
 
-data<-mutate(allTimes, PathID=factor(allTimes$Path, labels=1:pathCount))
+data<-mutate(allTimes, PathID=factor(allTimes$Path, labels=1:pathCount), Timestamp=as.character(Timestamp))
 
-#Write the Raw Data.
-csvData<-mutate(data,Time=format(Time, digits=3))
-write.csv(csvData, "TimeData.csv")
 
 data<-tbl_df(data)
 
@@ -131,7 +128,7 @@ plotByPath()
 # Now show all of the urls by time.
 plotByTime<-function()
 {
-  timeString<-"%Y-%M-%d %H:%m:%OS"
+  timeString<-"%Y-%M-%d %H:%M:%OS"
   realTimes<-strptime(ByReal$Timestamp, timeString)
   proxyTimes<-strptime(ByProxy$Timestamp, timeString)
   
@@ -144,6 +141,11 @@ plotByTime()
 
 
 # Let's splat that to disk.
+
+#Write the Raw Data to a CSV file.
+csvData<-mutate(data,Time=format(Time, digits=3))
+write.csv(csvData, "TimeData.csv")
+
 # Write the plot to disk...
 png("TimePlots.png", width=500, height=1000, units="px")
 par(mfrow=c(2,1))
