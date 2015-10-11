@@ -63,7 +63,7 @@ rm("urlCount")
 # Each time we will randomize the order of the requests to prevent side effects from repeat requests, etc.
 # You may configure a seed now if you need to repeat results.
 # set.seed(10)
-
+options(sec.digits=3)
 doRequest<-function(urlData, sampleNumber)
 {
 
@@ -73,7 +73,7 @@ doRequest<-function(urlData, sampleNumber)
   message(paste("GET:", url))
   t<-system.time(getURL(url))[["elapsed"]]
 
-  data.frame(Host = urlData[1], Path=urlData[2], Time=t, Sample=sampleNumber, Timestamp=date())  
+  data.frame(Host = urlData[1], Path=urlData[2], Time=t, Sample=sampleNumber, Timestamp=as.character(Sys.time()))  
 }
 
 # Compile all of the times + data together.
@@ -107,20 +107,47 @@ ByReal<-filter(data, Host==RealHost)
 ByProxy<-filter(data, Host==ProxyHost)
 
 
-par(mfrow=c(1,1))
+# Init graph options.
+par(mfrow=c(2,1))
+yRange<-c(-0.5,max(data$Time)+1)
+
+
+applyLegend<-function()
+{
+  legend("topright", col=c("red","blue"), legend=PlotLabels, pch=1)
+}
 
 # Plot the samples, organized by the path ID.  This way we can see the times
 # for each the real/proxy endpoints.
 plotByPath<-function()
 {
-  max(data$Time)
-  yRange<-c(-0.5,max(data$Time)+1)
-  
-  plot(x=as.numeric(ByReal$PathID), y=ByReal$Time, col="red", pch=1, xlab="PathID", ylab="Time",ylim=yRange, main="Time By Path")
+  plot(x=as.numeric(ByReal$PathID), y=ByReal$Time, col="red", pch=1, xlab="PathID", ylab="Time", ylim=yRange, main="Time By Path")
   lines(x=as.numeric(ByProxy$PathID), y=ByProxy$Time, col="blue", type="p")
-  legend("topright", col=c("red","blue"), legend=PlotLabels, pch=1)
+  applyLegend()
 }
 plotByPath()
 
 
 # Now show all of the urls by time.
+plotByTime<-function()
+{
+  timeString<-"%Y-%M-%d %H:%m:%OS"
+  realTimes<-strptime(ByReal$Timestamp, timeString)
+  proxyTimes<-strptime(ByProxy$Timestamp, timeString)
+  
+  plot(x=realTimes, y=ByReal$Time, col="red", pch=1, xlab="Timestamp (sec)", ylab="Time", ylim=yRange, main="All Requests")
+
+  lines(x=proxyTimes, y=ByProxy$Time, col="blue", type="p")
+  applyLegend()
+}
+plotByTime()
+
+
+# Let's splat that to disk.
+# Write the plot to disk...
+png("TimePlots.png", width=500, height=1000, units="px")
+par(mfrow=c(2,1))
+plotByPath()
+plotByTime()
+dev.off()
+
