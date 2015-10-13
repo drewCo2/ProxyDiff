@@ -9,7 +9,6 @@
 # Libs
 library(RCurl)
 library(dplyr)
-# library(tidyr)
 
 # Clear + initialize.
 rm(list=ls())
@@ -66,7 +65,6 @@ rm("urlCount")
 options(sec.digits=3)
 doRequest<-function(urlData, sampleNumber)
 {
-
   url<-paste0(urlData["Host"],urlData["Path"])
 
   # We just download the url and measure the amount of time that it took.
@@ -78,23 +76,31 @@ doRequest<-function(urlData, sampleNumber)
 
 # Compile all of the times + data together.
 allTimes<-data.frame(Host=character(), Path=character(), Time=numeric(), Sample=numeric(), Timestamp=character())
+
+# Delays between requests...
+allDelays<-runif(nrow(final), DelayMin, DelayMax)
+
 for(i in 1:RequestCount)
 {
   # Randomize the order of the requests.
-  # useList = sample(final)
   useList<-final[sample(1:nrow(final)),]
+  useDelays<-sample(allDelays)
   for(j in 1:nrow(useList))
   {
+    # We make the request, and sleep a bit.
     allTimes<-rbind(allTimes, doRequest(useList[j,], i))
+    
+    #Sleep.  This is to simulate a real user, rather than flooding the endpoints with instant requests.
+    Sys.sleep(useDelays[i])
   }
 }
 
-# Write the raw data to disk.
-pathCount<-nrow(allTimes) / RequestCount / 2
 
+
+
+# Get the data ready for processing...
+pathCount<-length(unique(allTimes$Path))
 data<-mutate(allTimes, PathID=factor(allTimes$Path, labels=1:pathCount), Timestamp=as.character(Timestamp))
-
-
 data<-tbl_df(data)
 
 ByHost = group_by(data, Host)
@@ -141,13 +147,23 @@ plotByTime()
 
 
 # Let's splat that to disk.
+dataDir<-"./Data"
+if (!dir.exists(dataDir)) { dir.create(dataDir) }
+baseName<-format(Sys.time(), "%m%d%Y-%H%M%S")
+csvPath<-paste0(dataDir, "/data-", baseName, ".csv")
+imgPath<-paste0(dataDir, "/plot-", baseName, ".png")
 
 #Write the Raw Data to a CSV file.
 csvData<-mutate(data,Time=format(Time, digits=3))
-write.csv(csvData, "TimeData.csv")
+write.csv(csvData, csvPath)
 
 # Write the plot to disk...
-png("TimePlots.png", width=500, height=1000, units="px")
+minWidth<-500
+width=nrow(allTimes) * 3
+if (width<minWidth) { width = minWidth }
+
+
+png(imgPath, width=width, height=1000, units="px")
 par(mfrow=c(2,1))
 plotByPath()
 plotByTime()
